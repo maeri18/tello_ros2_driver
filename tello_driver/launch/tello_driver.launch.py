@@ -30,9 +30,23 @@ def generate_launch_description():
         output="screen",
     )
 
+    compressed_image_node = Node(
+        package="image_transport",
+        namespace=LaunchConfiguration("ns"),
+        executable="republish",
+        arguments=["raw", "compressed"],
+        parameters=[LaunchConfiguration("params_file")],
+        remappings=[
+            ("in", "/camera/image_raw"),
+            ("out/compressed", "/camera/image/compressed"),
+        ],
+    )
+
     ld = LaunchDescription()
     ld.add_action(params_file_arg)
     ld.add_action(ns_launch_arg)
     ld.add_action(tello_driver_node)
+    ld.add_action(compressed_image_node)
+
 
     return ld
