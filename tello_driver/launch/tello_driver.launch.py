@@ -4,6 +4,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python import get_package_share_directory
+from launch.conditions import IfCondition
 
 
 def generate_launch_description():
@@ -30,23 +31,30 @@ def generate_launch_description():
         output="screen",
     )
 
+    compression_flag = DeclareLaunchArgument(
+        "use_compression",
+        default_value="true",
+        description="If true, the images will be republished as compressed images on a separate topic",
+    )
+
     compressed_image_node = Node(
         package="image_transport",
         namespace=LaunchConfiguration("ns"),
         executable="republish",
         arguments=["raw", "compressed"],
-        parameters=[LaunchConfiguration("params_file")],
         remappings=[
             ("in", "/camera/image_raw"),
             ("out/compressed", "/camera/image_raw/compressed"),
         ],
+        condition=IfCondition(LaunchConfiguration("use_compression")),
     )
 
     ld = LaunchDescription()
-    ld.add_action(params_file_arg)
     ld.add_action(ns_launch_arg)
+    ld.add_action(params_file_arg)
     ld.add_action(tello_driver_node)
-    ld.add_action(compressed_image_node)
 
+    ld.add_action(compression_flag)
+    ld.add_action(compressed_image_node)
 
     return ld
